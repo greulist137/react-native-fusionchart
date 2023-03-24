@@ -1,14 +1,14 @@
 import React, { Component } from "react";
 import { View, StyleSheet, Platform } from "react-native";
 import { WebView } from "react-native-webview";
-import { Asset } from 'expo-asset';
-import * as FileSystem from 'expo-file-system';
+import { Asset } from "expo-asset";
+import * as FileSystem from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import {
   askAsync,
   MEDIA_LIBRARY_WRITE_ONLY,
   NOTIFICATIONS,
-  getAsync
+  getAsync,
 } from "expo-permissions";
 import * as Notifications from "expo-notifications";
 import * as Sharing from "expo-sharing";
@@ -133,7 +133,6 @@ export default class ReactNativeFusionCharts extends Component {
         FileSystem.writeAsStringAsync(fileUri, base64Code, {
           encoding: FileSystem.EncodingType.Base64,
         }).then(() => {
-
           Sharing.shareAsync(fileUri);
           MediaLibrary.saveToLibraryAsync(fileUri).then(async () => {
             await askAsync(NOTIFICATIONS);
@@ -293,8 +292,8 @@ export default class ReactNativeFusionCharts extends Component {
       if (!utils.isUndefined(currDataFormat) && !utils.isUndefined(currData)) {
         this.runInWebView(`
           window.chartObj.setChartData(${utils.portValueSafely(
-          currData
-        )}, '${String(currDataFormat).toLowerCase()}');
+            currData
+          )}, '${String(currDataFormat).toLowerCase()}');
           window.chartObj.render();
         `);
       }
@@ -318,8 +317,8 @@ export default class ReactNativeFusionCharts extends Component {
         chartConfigs.dataSource.data = window.dataTable;
       } else if(${isJsonChanged}) {
         if(${utils.portValueSafely(
-        this.state.dataJson
-      )} && ${utils.portValueSafely(this.state.schemaJson)}) {
+          this.state.dataJson
+        )} && ${utils.portValueSafely(this.state.schemaJson)}) {
           var dataTable = new FusionCharts.DataStore().createDataTable(
             ${utils.portValueSafely(this.state.dataJson)},
             ${utils.portValueSafely(this.state.schemaJson)}
@@ -425,13 +424,18 @@ export default class ReactNativeFusionCharts extends Component {
 
   setLayout = async () => {
     const indexHtml = Asset.fromModule(require("./modules/index.html"));
-
     this.setState({
-      layoutHTML: await this.getAssetAsString(indexHtml),
+      layoutHTML: await this.getAssetAsString(indexHtml).catch((err) => {
+        const indexHtml2 = Asset.fromModule(require("./modules/index.html"));
+        return indexHtml2.getAssetAsString(indexHtml2);
+      }),
     });
   };
 
   getAssetAsString = async (asset) => {
+    if (!__DEV__) {
+      return await FileSystem.readAsStringAsync(asset.uri);
+    }
     const downloadedModules = await FileSystem.readDirectoryAsync(
       FileSystem.cacheDirectory
     );
